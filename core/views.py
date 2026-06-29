@@ -338,11 +338,11 @@ def fetch_trends_api(request):
     if not access_key:
         return JsonResponse({"error": "Unsplash API key not configured"}, status=500)
         
-    url = "https://api.unsplash.com/search/photos"
+    url = "https://api.unsplash.com/photos/random"
     
     params = {
         "query": query,
-        "per_page": 20,
+        "count": 30,
         "orientation": "portrait",
         "content_filter": "high"
     }
@@ -354,7 +354,10 @@ def fetch_trends_api(request):
         data = response.json()
         
         photos = []
-        for photo in data.get("results", []):
+        # /photos/random returns a list directly when count is provided
+        photo_list = data if isinstance(data, list) else [data]
+        
+        for photo in photo_list:
             photos.append({
                 "id": photo["id"],
                 "url": photo["urls"]["regular"],
