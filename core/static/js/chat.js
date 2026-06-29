@@ -107,7 +107,7 @@ async function sendMessage() {
         }
 
         currentSessionId = data.session_id;
-        appendCritiqueCard(data.critique);
+        appendCritiqueCard(data.critique, data.message_id);
 
     } catch (err) {
         loadingEl.remove();
@@ -154,7 +154,7 @@ function appendLoading() {
     return div;
 }
 
-function appendCritiqueCard(critique) {
+function appendCritiqueCard(critique, messageId) {
     const div = document.createElement("div");
     div.className = "mb-8 text-[#ececec] max-w-2xl";
 
@@ -229,8 +229,9 @@ function appendCritiqueCard(critique) {
 
         <div class="mt-6 border-t border-[#3f3f3f] pt-4">
             <button onclick="saveThisLook(this)" 
-                    class="text-xs text-[#8e8ea0] hover:text-indigo-400 
-                           transition-colors">
+                    data-message-id="${messageId}"
+                    class="text-xs text-[#a1a1aa] hover:text-cyan-400 
+                           transition-colors font-medium">
                 + Save this look
             </button>
         </div>
@@ -271,7 +272,26 @@ function getCookie(name) {
     if (parts.length === 2) return parts.pop().split(";").shift();
 }
 
-function saveThisLook(btn) {
-    btn.textContent = "✓ Saved";
-    btn.classList.add("text-indigo-400");
+async function saveThisLook(btn) {
+    const messageId = btn.dataset.messageId;
+    if (!messageId) return;
+    
+    try {
+        const res = await fetch("/api/save-look/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": getCookie("csrftoken")
+            },
+            body: JSON.stringify({ message_id: messageId })
+        });
+        const data = await res.json();
+        if (data.saved) {
+            btn.textContent = "✓ Saved";
+            btn.classList.add("text-cyan-400");
+            btn.disabled = true;
+        }
+    } catch (err) {
+        btn.textContent = "Failed to save";
+    }
 }

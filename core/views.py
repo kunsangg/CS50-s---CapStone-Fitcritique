@@ -182,7 +182,7 @@ def chat_api(request):
     
     # Save assistant message
     assistant_content = json.dumps(critique)
-    Message.objects.create(
+    assistant_message = Message.objects.create(
         session=session,
         role="assistant",
         content=assistant_content
@@ -190,6 +190,7 @@ def chat_api(request):
     
     return JsonResponse({
         "session_id": session.id,
+        "message_id": assistant_message.id,
         "critique": critique
     })
 
@@ -255,3 +256,111 @@ def api_save_look(request, session_id):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
     return JsonResponse({'error': 'Invalid method'}, status=405)
+
+
+@login_required
+@csrf_exempt
+def save_look(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    import json as pyjson
+    body = pyjson.loads(request.body)
+    message_id = body.get("message_id")
+    
+    try:
+        message = Message.objects.get(id=message_id, 
+                                      session__user=request.user)
+    except Message.DoesNotExist:
+        return JsonResponse({"error": "Message not found"}, status=404)
+    
+    from .models import SavedLook
+    look, created = SavedLook.objects.get_or_create(
+        user=request.user,
+        message=message
+    )
+    
+    return JsonResponse({
+        "saved": True, 
+        "created": created,
+        "look_id": look.id
+    })
+
+@login_required
+def saved_critiques_view(request):
+    from .models import SavedLook
+    looks = SavedLook.objects.filter(
+        user=request.user
+    ).select_related("message", "message__session").order_by("-created_at")
+    
+    saved_data = []
+    for look in looks:
+        try:
+            import json as pyjson
+            critique = pyjson.loads(look.message.content)
+            saved_data.append({
+                "id": look.id,
+                "session_title": look.message.session.title,
+                "created_at": look.created_at.strftime("%b %d, %Y"),
+                "critique": critique,
+                "has_image": bool(look.message.image)
+            })
+        except Exception:
+            continue
+    
+    return render(request, "saved.html", {"saved_looks": saved_data})
+
+import requests as req
+@login_required  
+def style_trends_view(request):
+    return render(request, "trends.html")
+
+@login_required
+def fetch_trends_api(request):
+    queries = [
+        "street fashion outfit 2025",
+        "minimalist fashion aesthetic",
+        "luxury fashion editorial",
+        "summer outfit inspiration",
+        "mens fashion style"
+    ]
+    
+    import random
+    query = random.choice(queries)
+    
+    from django.conf import settings
+    access_key = getattr(settings, "UNSPLASH_ACCESS_KEY", None)
+    
+    if not access_key:
+        return JsonResponse({"error": "Unsplash API key not configured"}, status=500)
+        
+    url = "https://api.unsplash.com/search/photos"
+    
+    params = {
+        "query": query,
+        "per_page": 20,
+        "orientation": "portrait",
+        "content_filter": "high"
+    }
+    headers = {"Authorization": f"Client-ID {access_key}"}
+    
+    try:
+        response = req.get(url, params=params, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+        
+        photos = []
+        for photo in data.get("results", []):
+            photos.append({
+                "id": photo["id"],
+                "url": photo["urls"]["regular"],
+                "thumb": photo["urls"]["small"],
+                "alt": photo.get("alt_description", "Fashion photo"),
+                "photographer": photo["user"]["name"],
+                "photographer_url": photo["user"]["links"]["html"],
+                "unsplash_url": photo["links"]["html"]
+            })
+        
+        return JsonResponse({"photos": photos, "query": query})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)

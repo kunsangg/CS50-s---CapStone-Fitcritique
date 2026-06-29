@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 overflow-y-auto custom-scrollbar h-full w-full">
+    <div class="flex justify-between items-center mb-8">
+        <div class="flex items-center gap-3">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+            <h1 class="text-2xl font-bold text-white tracking-tight">
+                Style Trends
+            </h1>
+        </div>
+        <button id="refresh-btn" 
+                class="text-sm font-medium text-[#a1a1aa] hover:text-cyan-400 
+                       transition-colors flex items-center gap-2 bg-[#18181b] border border-white/5 rounded-lg px-3 py-1.5 hover:border-cyan-400/30">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            Refresh Feed
+        </button>
+    </div>
+    
+    <div id="trends-grid" 
+         class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-20">
+        <div class="text-[#a1a1aa] text-sm flex items-center gap-2">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading trends...
+        </div>
+    </div>
+</div>
+
+<script>
+async function loadTrends() {
+    const grid = document.getElementById("trends-grid");
+    grid.innerHTML = `
+        <div class="text-[#a1a1aa] text-sm flex items-center gap-2 col-span-full">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading trends...
+        </div>
+    `;
+    
+    try {
+        const res = await fetch("/api/trends/");
+        const data = await res.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+
+        grid.innerHTML = "";
+        
+        data.photos.forEach(photo => {
+            const div = document.createElement("div");
+            div.className = "break-inside-avoid mb-4";
+            div.innerHTML = `
+                <div class="relative group rounded-2xl overflow-hidden 
+                            bg-[#18181b] border border-white/5 cursor-pointer shadow-lg"
+                     onclick="critiqueThis('${photo.alt.replace(/'/g, "\\'")}')">
+                    <img src="${photo.thumb}" 
+                         alt="${photo.alt}"
+                         class="w-full object-cover transition-transform 
+                                duration-500 group-hover:scale-105"
+                         loading="lazy" />
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent 
+                                opacity-0 group-hover:opacity-100 transition-all 
+                                duration-300 flex flex-col justify-end p-4">
+                        <div class="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 w-full">
+                            <button class="w-full bg-cyan-500/90 backdrop-blur-sm
+                                          hover:bg-cyan-400 text-white font-medium
+                                          text-sm rounded-xl py-2.5 
+                                          transition-colors shadow-lg">
+                                Critique this style →
+                            </button>
+                            <a href="${photo.unsplash_url}" target="_blank" onclick="event.stopPropagation()" class="block text-xs text-white/60 mt-2 text-center hover:text-white transition-colors">
+                                Photo by ${photo.photographer} on Unsplash
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(div);
+        });
+    } catch (err) {
+        grid.innerHTML = `
+            <div class="col-span-full bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+                <p class="text-red-400 text-sm font-medium">Failed to load trends</p>
+                <p class="text-xs text-red-400/70 mt-1">${err.message}</p>
+                <p class="text-xs text-red-400/70 mt-1">Make sure you added the UNSPLASH_ACCESS_KEY to your .env file!</p>
+            </div>
+        `;
+    }
+}
+
+function critiqueThis(styleDescription) {
+    window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}`;
+}
+
+document.getElementById("refresh-btn").addEventListener("click", loadTrends);
+loadTrends();
+</script>
+{% endblock %}

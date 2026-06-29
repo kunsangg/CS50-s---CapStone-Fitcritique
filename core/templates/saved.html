@@ -1,71 +1,52 @@
-{% extends 'base.html' %}
-{% block title %}Saved Looks - FitCritic{% endblock %}
-
+{% extends "base.html" %}
 {% block content %}
-<div class="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-y-auto">
-    <div class="w-full max-w-4xl mx-auto p-4 md:p-8">
-        <h2 class="text-3xl font-bold tracking-tight text-white mb-8">Saved Looks</h2>
-        
-        {% if not saved_looks %}
-        <div class="text-center py-12">
-            <p class="text-zinc-500 mb-4">You haven't saved any looks yet.</p>
-            <a href="{% url 'chat' %}" class="text-indigo-400 hover:underline">Go get some critiques</a>
-        </div>
-        {% else %}
-        
-        <div class="space-y-8">
-            {% for look in saved_looks %}
-            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
-                
-                <div class="flex justify-between items-start mb-4">
-                    <p class="text-xs text-zinc-500">Saved on {{ look.created_at|date:"M j, Y" }}</p>
-                    <a href="/chat/{{ look.message.session.id }}/" class="text-xs text-indigo-400 hover:underline">View original chat</a>
-                </div>
-                
-                <div class="flex flex-col md:flex-row gap-6">
-                    <!-- If user uploaded an image just before this AI message, it's not directly attached to this message, 
-                         but for simplicity we might not show it here if we don't fetch the previous message. -->
-                         
-                    <div class="flex-1">
-                        {% with data=look.message.parsed_content %}
-                        {% if data %}
-                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
-                                <h3 class="text-lg font-medium text-white">{{ data.summary|truncatechars:60 }}</h3>
-                                <div class="ml-4 shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full border-2 {% if data.fit_score >= 7 %}border-green-500/50 text-green-400{% elif data.fit_score >= 5 %}border-yellow-500/50 text-yellow-400{% else %}border-red-500/50 text-red-400{% endif %}">
-                                    <span class="text-lg font-bold">{{ data.fit_score }}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-sm">
-                                <div>
-                                    <span class="text-green-400 block mb-1">Works:</span>
-                                    <ul class="text-zinc-400 space-y-1">
-                                    {% for w in data.what_works|slice:":2" %}
-                                        <li class="truncate">• {{ w }}</li>
-                                    {% endfor %}
-                                    </ul>
-                                </div>
-                                <div>
-                                    <span class="text-red-400 block mb-1">Needs Work:</span>
-                                    <ul class="text-zinc-400 space-y-1">
-                                    {% for w in data.what_doesnt|slice:":2" %}
-                                        <li class="truncate">• {{ w }}</li>
-                                    {% endfor %}
-                                    </ul>
-                                </div>
-                            </div>
-                        {% else %}
-                            <p class="text-zinc-400">{{ look.message.content|truncatechars:150 }}</p>
-                        {% endif %}
-                        {% endwith %}
-                    </div>
-                </div>
-                
-            </div>
-            {% endfor %}
-        </div>
-        
-        {% endif %}
+<div class="max-w-4xl mx-auto px-6 py-10 overflow-y-auto custom-scrollbar h-full w-full">
+    <div class="flex items-center gap-3 mb-8">
+        <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <h1 class="text-2xl font-bold text-white tracking-tight">
+            Saved Critiques
+        </h1>
     </div>
+    
+    {% if saved_looks %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">
+        {% for look in saved_looks %}
+        <div class="bg-[#18181b]/60 backdrop-blur-md rounded-2xl p-6 border border-white/5 shadow-xl transition-all hover:border-white/10">
+            <div class="flex justify-between items-start mb-4">
+                <p class="text-sm font-medium text-[#a1a1aa] truncate mr-4">{{ look.session_title }}</p>
+                <p class="text-xs text-[#71717a] whitespace-nowrap">{{ look.created_at }}</p>
+            </div>
+            <div class="flex items-center gap-2 mb-4">
+                <span class="text-4xl font-black text-cyan-400">
+                    {{ look.critique.fit_score }}
+                </span>
+                <span class="text-[#a1a1aa] font-medium">/10</span>
+            </div>
+            <p class="text-sm text-white/90 mb-5 leading-relaxed">
+                {{ look.critique.summary }}
+            </p>
+            {% if look.critique.suggestions %}
+            <div class="space-y-2">
+                <p class="text-xs font-semibold text-white/40 uppercase tracking-widest mb-2">Suggestions</p>
+                {% for s in look.critique.suggestions %}
+                <div class="flex items-start gap-2">
+                    <svg class="w-3.5 h-3.5 text-cyan-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    <p class="text-sm text-[#a1a1aa]">{{ s }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="flex flex-col items-center justify-center py-32 text-center h-[50vh]">
+        <div class="w-16 h-16 bg-[#18181b] border border-white/5 rounded-full flex items-center justify-center mb-6">
+            <svg class="w-8 h-8 text-[#71717a]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+        </div>
+        <p class="text-lg font-medium text-white mb-2">No saved critiques yet</p>
+        <p class="text-sm text-[#a1a1aa]">Save a look from any chat to build your collection.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

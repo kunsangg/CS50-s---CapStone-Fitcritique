@@ -17,4 +17,8 @@ urlpatterns = [
     path('api/sessions/', views.api_sessions, name='api_sessions'),
     path('api/sessions/<int:session_id>/', views.api_session_detail, name='api_session_detail'),
     path('api/sessions/<int:session_id>/save/', views.api_save_look, name='api_save_look'),
+    path('api/save-look/', views.save_look, name='save_look'),
+    
+    path('trends/', views.style_trends_view, name='trends'),
+    path('api/trends/', views.fetch_trends_api, name='fetch_trends'),
 ]
