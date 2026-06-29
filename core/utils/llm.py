@@ -89,6 +89,7 @@ def get_fashion_critique(conversation_history, image_base64=None,
         "generationConfig": {
             "temperature": 0.7,
             "maxOutputTokens": 1024,
+            "responseMimeType": "application/json"
         }
     }
     
@@ -114,9 +115,20 @@ def get_fashion_critique(conversation_history, image_base64=None,
     # Clean up in case model wraps in backticks
     clean = raw_text.strip()
     if clean.startswith("```"):
-        clean = clean.split("```")[1]
-        if clean.startswith("json"):
-            clean = clean[4:]
+        # Remove first line which is typically ```json
+        clean = clean.split("\n", 1)[-1]
+    if clean.endswith("```"):
+        # Remove last line which is typically ```
+        clean = clean.rsplit("\n", 1)[0]
+    
     clean = clean.strip()
     
-    return json.loads(clean)
+    try:
+        return json.loads(clean)
+    except json.JSONDecodeError as e:
+        print("JSON Decode Error!")
+        print("RAW TEXT:")
+        print(raw_text)
+        print("CLEANED TEXT:")
+        print(clean)
+        raise e
