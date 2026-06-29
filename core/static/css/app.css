@@ -1,10 +1,56 @@
-/* Hide scrollbar for Chrome, Safari and Opera */
-.hide-scrollbar::-webkit-scrollbar {
-    display: none;
+/* Tailwind Utilities */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar for a cleaner look */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.hide-scrollbar {
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Hide scrollbar completely if needed */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
+}
+
+/* Transition for sidebar */
+.sidebar-overlay {
+    transition: opacity 0.3s ease;
+}
+
+.sidebar-panel {
+    transition: transform 0.3s ease;
+}
+
+/* Textarea auto-resize reset */
+textarea {
+    min-height: 24px;
+    max-height: 200px;
+}
+
+/* Base resets */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #212121; /* Matches main area */
 }

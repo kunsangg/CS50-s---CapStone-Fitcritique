@@ -3,64 +3,82 @@
 {% block title %}Chat - FitCritic{% endblock %}
 
 {% block content %}
-<div class="flex-1 flex flex-col h-full bg-[#0a0a0a] relative overflow-hidden">
+<div class="relative flex-1 flex flex-col h-full bg-chatgpt-main w-full overflow-hidden">
     
-    <!-- Header (Mobile mostly handled by base.html, but this is a chat specific header if needed) -->
-    
-    <!-- Chat Messages Area -->
-    <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32">
-        
-        <!-- Empty State (Hidden once messages exist) -->
-        <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center opacity-100 transition-opacity">
-            <div class="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
-                <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+    <!-- Messages Scroll Area -->
+    <div id="messages-container" class="flex-1 overflow-y-auto w-full custom-scrollbar pb-32">
+        <div class="w-full max-w-[680px] mx-auto px-4 pt-10 pb-6 flex flex-col gap-6" id="messages-list">
+            
+            <!-- Empty State -->
+            <div id="empty-state" class="flex flex-col items-center justify-center mt-12 md:mt-24 h-full">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mb-6 shadow-lg shadow-white/5">
+                    <svg class="w-8 h-8 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.514M11 5v2m5 0v2"></path>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-semibold text-white mb-3 text-center">What are you wearing today?</h1>
+                <p class="text-chatgpt-muted mb-10 text-center max-w-md">Describe your outfit or upload a photo for an honest, AI-powered critique.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 w-full max-w-2xl px-4">
+                    <button class="suggestion-chip bg-chatgpt-bubble border border-chatgpt-border hover:bg-[#383838] rounded-2xl p-4 text-left transition text-chatgpt-text flex items-center justify-between group">
+                        <span class="text-sm font-medium">Rate my streetwear fit</span>
+                        <svg class="w-4 h-4 text-chatgpt-muted opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <button class="suggestion-chip bg-chatgpt-bubble border border-chatgpt-border hover:bg-[#383838] rounded-2xl p-4 text-left transition text-chatgpt-text flex items-center justify-between group">
+                        <span class="text-sm font-medium">Is this office outfit appropriate?</span>
+                        <svg class="w-4 h-4 text-chatgpt-muted opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <button class="suggestion-chip bg-chatgpt-bubble border border-chatgpt-border hover:bg-[#383838] rounded-2xl p-4 text-left transition text-chatgpt-text flex items-center justify-between group">
+                        <span class="text-sm font-medium">Help me style these sneakers</span>
+                        <svg class="w-4 h-4 text-chatgpt-muted opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                    <button class="suggestion-chip bg-chatgpt-bubble border border-chatgpt-border hover:bg-[#383838] rounded-2xl p-4 text-left transition text-chatgpt-text flex items-center justify-between group">
+                        <span class="text-sm font-medium">What should I wear to a dinner date?</span>
+                        <svg class="w-4 h-4 text-chatgpt-muted opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
             </div>
-            <h2 class="text-2xl font-semibold text-white mb-2">What are you wearing today?</h2>
-            <p class="text-zinc-400 max-w-md">Describe your outfit or upload a photo to get an AI-powered styling critique.</p>
+            
+            <!-- Messages go here -->
+            
         </div>
-        
-        <!-- Messages will be appended here via JS -->
-        <div id="messages-list" class="max-w-3xl mx-auto space-y-6"></div>
-        
     </div>
 
-    <!-- Composer Pinned to Bottom -->
-    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a] to-transparent pt-10 pb-4 px-4 md:px-8">
-        <div class="max-w-3xl mx-auto">
+    <!-- Composer -->
+    <div class="absolute bottom-0 left-0 right-0 pt-2 pb-6 px-4 bg-gradient-to-t from-chatgpt-main via-chatgpt-main to-transparent w-full">
+        <div class="max-w-[680px] mx-auto relative">
             
-            <!-- Image Preview Area (Hidden by default) -->
-            <div id="image-preview-container" class="hidden mb-2 relative inline-block">
-                <img id="image-preview" src="" alt="Upload preview" class="h-20 w-20 object-cover rounded-lg border border-zinc-700">
-                <button type="button" id="remove-image-btn" class="absolute -top-2 -right-2 bg-zinc-800 text-white rounded-full p-1 border border-zinc-600 hover:bg-zinc-700">
+            <!-- Image Preview Area -->
+            <div id="preview-container" class="hidden absolute bottom-full left-0 mb-3 bg-chatgpt-bubble border border-chatgpt-border rounded-xl p-2 w-32 h-32 group shadow-xl">
+                <img id="image-preview" src="#" alt="Preview" class="w-full h-full object-cover rounded-lg">
+                <button type="button" id="remove-image" class="absolute -top-2 -right-2 bg-chatgpt-border text-white rounded-full p-1 shadow-lg hover:bg-chatgpt-muted transition opacity-0 group-hover:opacity-100">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <form id="chat-form" class="relative bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl flex items-end p-2 transition-all focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50">
+            <form id="chat-form" class="relative bg-chatgpt-bubble rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.1)] border border-chatgpt-border focus-within:border-white/20 transition-colors flex items-end px-3 py-3">
+                {% csrf_token %}
+                <input type="file" id="image-input" accept="image/*" class="hidden">
+                <input type="hidden" id="base64-image" name="image">
                 
-                <input type="file" id="image-upload" accept="image/*" class="hidden">
-                <button type="button" id="trigger-upload" class="p-3 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition shrink-0">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <button type="button" id="attach-btn" class="p-2 text-chatgpt-text hover:text-white hover:bg-[#383838] rounded-xl transition-colors mb-0.5 shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                    </svg>
                 </button>
                 
-                <textarea id="chat-input" rows="1" class="w-full max-h-48 bg-transparent text-zinc-100 placeholder-zinc-500 resize-none py-3 px-2 focus:outline-none" placeholder="Describe your outfit..."></textarea>
+                <textarea id="message-input" name="message" rows="1" class="w-full bg-transparent text-white placeholder-chatgpt-muted outline-none resize-none px-3 py-[9px] max-h-[200px] overflow-y-auto custom-scrollbar text-base md:text-sm" placeholder="Message FitCritic..."></textarea>
                 
-                <button type="submit" id="send-btn" class="p-3 m-1 text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                <button type="submit" id="send-btn" class="p-2 bg-chatgpt-border text-chatgpt-muted rounded-xl transition-colors shrink-0 mb-0.5" disabled>
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.06-.87.49-.87.99l.01 4.61c0 .71.73 1.2 1.39.92z"></path></svg>
                 </button>
             </form>
-            <div class="text-center mt-2">
-                <span class="text-xs text-zinc-600">AI can make mistakes. Consider the critique as editorial advice.</span>
-            </div>
+            <div class="text-center mt-2 text-xs text-chatgpt-muted">FitCritic can make mistakes. Consider verifying important information.</div>
         </div>
     </div>
 </div>
-
-<!-- Add csrf token for JS fetch requests -->
-{% csrf_token %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/upload.js' %}"></script>
 <script src="{% static 'js/chat.js' %}"></script>
 {% endblock %}

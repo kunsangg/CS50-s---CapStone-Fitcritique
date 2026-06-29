@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
     const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
+    const messageInput = document.getElementById('message-input');
     const messagesList = document.getElementById('messages-list');
     const emptyState = document.getElementById('empty-state');
-    const sendBtn = document.getElementById('send-btn');
-    
-    // session ID will be managed via the URL or returned from first message
+    const base64Input = document.getElementById('base64-image');
+    const removeImageBtn = document.getElementById('remove-image');
+
     let currentSessionId = window.location.pathname.split('/').filter(Boolean).pop();
     if (currentSessionId === 'chat' || isNaN(currentSessionId)) {
         currentSessionId = null;
@@ -15,107 +15,195 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!chatForm) return;
 
-    // Handle enter key to submit
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            chatForm.dispatchEvent(new Event('submit'));
-        }
-    });
-
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const text = chatInput.value.trim();
-        const imageBase64 = window.uploadedImageBase64;
+        const message = messageInput.value.trim();
+        const image = base64Input.value;
         
-        if (!text && !imageBase64) return;
-        
+        if (!message && !image) return;
+
         // Hide empty state
         if (emptyState) emptyState.style.display = 'none';
+
+        // Add user message to UI
+        appendUserMessage(message, image);
         
-        // Disable input
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
-        chatInput.disabled = true;
-        sendBtn.disabled = true;
+        // Clear input and reset textarea height
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        if (removeImageBtn) removeImageBtn.click(); // clears image preview
         
-        // Clear image upload
-        const removeImageBtn = document.getElementById('remove-image-btn');
-        if (removeImageBtn) removeImageBtn.click();
-        
-        // Render optimistic user message
-        appendUserMessage(text, imageBase64);
-        
-        // Append loading skeleton
+        // Show loading skeleton
         const skeletonId = appendLoadingSkeleton();
-        
-        // Auto scroll
         scrollToBottom();
 
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        
         try {
-            const response = await fetch('/api/chat/', {
+            // Call our existing Django API endpoint
+            const res = await fetch('/api/chat/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 body: JSON.stringify({
-                    message: text,
-                    image: imageBase64,
+                    message: message,
+                    image: image,
                     session_id: currentSessionId
                 })
             });
             
-            const data = await response.json();
+            const data = await res.json();
             
             // Remove skeleton
-            document.getElementById(skeletonId).remove();
+            const skeleton = document.getElementById(skeletonId);
+            if (skeleton) skeleton.remove();
             
-            if (response.ok) {
-                if (!currentSessionId && data.session_id) {
-                    currentSessionId = data.session_id;
-                    // Optionally update URL without reloading
-                    window.history.replaceState({}, '', `/chat/${currentSessionId}/`);
-                }
+            if (res.ok) {
+                currentSessionId = data.session_id;
+                // Update URL without reloading to reflect session
+                window.history.replaceState({}, '', `/chat/${currentSessionId}/`);
                 
-                // Render structured response
                 appendAiMessage(data.response, data.message_id);
             } else {
-                appendErrorMessage(data.error || "Failed to get response.");
+                appendError(data.error || 'Failed to get response');
             }
-            
         } catch (error) {
             console.error(error);
-            document.getElementById(skeletonId).remove();
-            appendErrorMessage("Network error occurred.");
-        } finally {
-            // Re-enable input
-            chatInput.disabled = false;
-            sendBtn.disabled = false;
-            chatInput.focus();
-            scrollToBottom();
+            const skeleton = document.getElementById(skeletonId);
+            if (skeleton) skeleton.remove();
+            appendError('A network error occurred.');
         }
+        
+        scrollToBottom();
     });
 
-    function appendUserMessage(text, imageBase64) {
+    function appendUserMessage(text, imageSrc) {
         const div = document.createElement('div');
-        div.className = 'flex justify-end';
+        div.className = 'w-full flex justify-end mb-4';
         
-        let content = `<div class="bg-zinc-800 text-zinc-100 px-5 py-3 rounded-2xl rounded-tr-sm max-w-xl shadow-sm">`;
-        if (imageBase64) {
-            content += `<img src="${imageBase64}" class="w-full max-w-sm rounded-lg mb-2 object-cover border border-zinc-700">`;
+        let content = `<div class="max-w-[80%] bg-chatgpt-bubble text-white rounded-2xl px-4 py-3 shadow-sm border border-chatgpt-border break-words">`;
+        if (imageSrc) {
+            content += `<img src="${imageSrc}" class="w-48 h-auto rounded-lg mb-2 shadow-md">`;
         }
         if (text) {
-            content += `<p class="whitespace-pre-wrap">${escapeHtml(text)}</p>`;
+            content += `<div>${escapeHtml(text)}</div>`;
         }
         content += `</div>`;
         
         div.innerHTML = content;
         messagesList.appendChild(div);
+    }
+
+    function appendAiMessage(rawResponse, messageId = null) {
+        const div = document.createElement('div');
+        div.className = 'w-full flex justify-start mb-6 text-white text-base';
+        
+        let content = '';
+        try {
+            // Try to parse the strict JSON response from the backend
+            let response = typeof rawResponse === 'string' ? JSON.parse(rawResponse) : rawResponse;
+            
+            content = `
+                <div class="w-full flex flex-col gap-4">
+                    ${response.summary ? `<p class="leading-relaxed">${escapeHtml(response.summary)}</p>` : ''}
+                    
+                    ${response.fit_score ? `
+                        <div class="flex items-center gap-3 my-2">
+                            <span class="text-3xl font-bold text-indigo-400">${response.fit_score}</span>
+                            <span class="text-xl text-chatgpt-muted font-medium">/10</span>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-2">
+                        ${response.what_works && response.what_works.length > 0 ? `
+                        <div>
+                            <h4 class="font-semibold text-green-400 mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                What works
+                            </h4>
+                            <ul class="space-y-1 text-sm text-chatgpt-text">
+                                ${response.what_works.map(w => `<li>• ${escapeHtml(w)}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                        
+                        ${response.what_doesnt && response.what_doesnt.length > 0 ? `
+                        <div>
+                            <h4 class="font-semibold text-red-400 mb-2 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                What doesn't
+                            </h4>
+                            <ul class="space-y-1 text-sm text-chatgpt-text">
+                                ${response.what_doesnt.map(w => `<li>• ${escapeHtml(w)}</li>`).join('')}
+                            </ul>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    ${response.suggestions && response.suggestions.length > 0 ? `
+                    <div class="my-2">
+                        <h4 class="font-semibold text-indigo-400 mb-2">How to improve</h4>
+                        <ul class="space-y-2 text-sm text-chatgpt-text">
+                            ${response.suggestions.map(s => `<li class="flex items-start gap-2"><span class="text-indigo-400 mt-1 shrink-0">•</span><span>${escapeHtml(s)}</span></li>`).join('')}
+                        </ul>
+                    </div>
+                    ` : ''}
+                    
+                    ${response.product_recommendations && response.product_recommendations.length > 0 ? `
+                    <div class="mt-4">
+                        <h4 class="font-semibold text-white mb-3">Product Picks</h4>
+                        <div class="flex overflow-x-auto custom-scrollbar gap-3 pb-2 w-full">
+                            ${response.product_recommendations.map(p => `
+                                <a href="${escapeHtml(p.url)}" target="_blank" class="shrink-0 bg-chatgpt-bubble border border-chatgpt-border hover:bg-[#383838] transition-colors rounded-xl p-3 w-48 flex flex-col group">
+                                    <span class="text-sm font-medium text-white truncate mb-1 group-hover:text-indigo-400 transition-colors">${escapeHtml(p.name)}</span>
+                                    <span class="text-xs text-chatgpt-muted truncate">${escapeHtml(p.brand)}</span>
+                                    <span class="text-xs text-green-400 mt-2 font-medium">${escapeHtml(p.price)}</span>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+        } catch(e) {
+            // Fallback for non-JSON text
+            content = `<div class="leading-relaxed w-full">${escapeHtml(rawResponse).replace(/\\n/g, '<br>')}</div>`;
+        }
+        
+        div.innerHTML = content;
+        messagesList.appendChild(div);
+    }
+
+    function appendLoadingSkeleton() {
+        const id = 'skeleton-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'w-full flex justify-start mb-6 animate-pulse';
+        div.innerHTML = `
+            <div class="w-full max-w-xl">
+                <div class="h-4 bg-chatgpt-bubble rounded w-3/4 mb-3"></div>
+                <div class="h-4 bg-chatgpt-bubble rounded w-1/2 mb-3"></div>
+                <div class="h-4 bg-chatgpt-bubble rounded w-5/6"></div>
+            </div>
+        `;
+        messagesList.appendChild(div);
+        return id;
+    }
+
+    function appendError(msg) {
+        const div = document.createElement('div');
+        div.className = 'w-full flex justify-start mb-6';
+        div.innerHTML = `<div class="text-red-400 text-sm py-2">${escapeHtml(msg)}</div>`;
+        messagesList.appendChild(div);
+    }
+
+    function scrollToBottom() {
+        const container = document.getElementById('messages-container');
+        if (container) {
+            container.scrollTop = container.scrollHeight;
+        }
     }
 
     async function loadSessionMessages(sessionId) {
@@ -138,135 +226,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function appendLoadingSkeleton() {
-        const id = 'skeleton-' + Date.now();
-        const div = document.createElement('div');
-        div.id = id;
-        div.className = 'flex justify-start animate-pulse';
-        div.innerHTML = `
-            <div class="bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-2xl rounded-tl-sm w-full max-w-2xl p-6 shadow-sm">
-                <div class="h-4 bg-zinc-800 rounded w-1/4 mb-4"></div>
-                <div class="space-y-3">
-                    <div class="h-4 bg-zinc-800 rounded"></div>
-                    <div class="h-4 bg-zinc-800 rounded w-5/6"></div>
-                </div>
-                <div class="mt-6 flex space-x-4">
-                    <div class="h-20 w-32 bg-zinc-800 rounded-lg"></div>
-                    <div class="h-20 w-32 bg-zinc-800 rounded-lg"></div>
-                </div>
-            </div>
-        `;
-        messagesList.appendChild(div);
-        return id;
-    }
-
-    function appendErrorMessage(msg) {
-        const div = document.createElement('div');
-        div.className = 'flex justify-start';
-        div.innerHTML = `
-            <div class="bg-red-500/10 border border-red-500/50 text-red-400 px-5 py-3 rounded-2xl rounded-tl-sm max-w-xl">
-                ${escapeHtml(msg)}
-            </div>
-        `;
-        messagesList.appendChild(div);
-    }
-
-    function appendAiMessage(responseObj, messageId) {
-        const div = document.createElement('div');
-        div.className = 'flex justify-start w-full';
-        
-        // Handle potentially malformed JSON parsing from backend
-        let data = responseObj;
-        if (typeof data === 'string') {
-            try {
-                data = JSON.parse(data);
-            } catch(e) {
-                // If it fails, fallback to simple text
-                div.innerHTML = `<div class="bg-zinc-900 border border-zinc-800 text-zinc-100 px-5 py-3 rounded-2xl rounded-tl-sm max-w-2xl whitespace-pre-wrap">${escapeHtml(data)}</div>`;
-                messagesList.appendChild(div);
-                return;
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
             }
         }
-
-        // Build the card HTML
-        let html = `
-        <div class="bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-2xl rounded-tl-sm w-full max-w-3xl p-6 shadow-sm relative group">
-            
-            <!-- Save Button -->
-            <button onclick="saveLook(${messageId}, this)" class="absolute top-4 right-4 text-zinc-500 hover:text-indigo-400 opacity-0 group-hover:opacity-100 transition" title="Save this look">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
-            </button>
-            
-            <div class="flex items-start justify-between mb-6 border-b border-zinc-800 pb-4">
-                <div>
-                    <h3 class="text-sm font-semibold text-zinc-400 uppercase tracking-wider mb-1">Overall Verdict</h3>
-                    <p class="text-lg text-white leading-relaxed">${escapeHtml(data.summary)}</p>
-                </div>
-                <div class="ml-4 shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-full border-2 ${data.fit_score >= 7 ? 'border-green-500/50 text-green-400' : data.fit_score >= 5 ? 'border-yellow-500/50 text-yellow-400' : 'border-red-500/50 text-red-400'}">
-                    <span class="text-xl font-bold">${data.fit_score}</span>
-                    <span class="text-[10px] text-zinc-500">/10</span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <!-- What Works -->
-                <div>
-                    <h4 class="text-sm font-semibold text-zinc-300 flex items-center mb-3">
-                        <svg class="w-4 h-4 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                        What Works
-                    </h4>
-                    <ul class="space-y-2 text-sm text-zinc-400">
-                        ${data.what_works.map(i => `<li>• ${escapeHtml(i)}</li>`).join('')}
-                    </ul>
-                </div>
-                
-                <!-- What Doesn't -->
-                <div>
-                    <h4 class="text-sm font-semibold text-zinc-300 flex items-center mb-3">
-                        <svg class="w-4 h-4 text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                        Needs Work
-                    </h4>
-                    <ul class="space-y-2 text-sm text-zinc-400">
-                        ${data.what_doesnt.map(i => `<li>• ${escapeHtml(i)}</li>`).join('')}
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Suggestions -->
-            <div class="mb-6 bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4">
-                <h4 class="text-sm font-semibold text-indigo-400 flex items-center mb-2">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                    Styling Action Items
-                </h4>
-                <ul class="space-y-2 text-sm text-indigo-200/80">
-                    ${data.suggestions.map(i => `<li>→ ${escapeHtml(i)}</li>`).join('')}
-                </ul>
-            </div>
-            
-            <!-- Products -->
-            ${data.products && data.products.length > 0 ? `
-            <div>
-                <h4 class="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Recommended Pieces</h4>
-                <div class="flex overflow-x-auto pb-4 gap-3 hide-scrollbar">
-                    ${data.products.map(p => `
-                        <a href="${p.url && p.url !== 'N/A' ? p.url : '#'}" target="_blank" class="shrink-0 w-64 bg-zinc-950 border border-zinc-800 hover:border-zinc-600 rounded-lg p-3 transition flex flex-col group">
-                            <span class="font-medium text-white text-sm truncate mb-1 group-hover:text-indigo-400">${escapeHtml(p.name)}</span>
-                            <span class="text-xs text-zinc-500 line-clamp-2">${escapeHtml(p.reason)}</span>
-                        </a>
-                    `).join('')}
-                </div>
-            </div>
-            ` : ''}
-        </div>
-        `;
-        
-        div.innerHTML = html;
-        messagesList.appendChild(div);
-    }
-
-    function scrollToBottom() {
-        const container = document.getElementById('chat-container');
-        container.scrollTop = container.scrollHeight;
+        return cookieValue;
     }
 
     function escapeHtml(unsafe) {
@@ -279,28 +251,3 @@ document.addEventListener('DOMContentLoaded', () => {
              .replace(/'/g, "&#039;");
     }
 });
-
-// Global function for the save button inside AI response
-async function saveLook(messageId, btnElement) {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-    const sessionId = window.location.pathname.split('/').filter(Boolean).pop();
-    
-    try {
-        const res = await fetch(`/api/sessions/${sessionId}/save/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ message_id: messageId })
-        });
-        
-        if (res.ok) {
-            btnElement.classList.remove('text-zinc-500');
-            btnElement.classList.add('text-indigo-400');
-            btnElement.innerHTML = `<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>`;
-        }
-    } catch(e) {
-        console.error("Save failed", e);
-    }
-}
