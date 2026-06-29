@@ -110,7 +110,7 @@ async function loadTrends(category = currentCategory) {
 }
 
 function critiqueThis(styleDescription) {
-    window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}`;
+    window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}&autosave=1`;
 }
 
 document.querySelectorAll('.filter-pill').forEach(btn => {

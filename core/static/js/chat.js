@@ -109,6 +109,12 @@ async function sendMessage() {
         currentSessionId = data.session_id;
         appendCritiqueCard(data.critique, data.message_id);
 
+        if (window.autoSaveNextCritique) {
+            const saveBtn = document.querySelector(`button[data-message-id="${data.message_id}"]`);
+            if (saveBtn) saveThisLook(saveBtn);
+            window.autoSaveNextCritique = false;
+        }
+
     } catch (err) {
         loadingEl.remove();
         appendError("Something went wrong. Try again.");
@@ -295,3 +301,20 @@ async function saveThisLook(btn) {
         btn.textContent = "Failed to save";
     }
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const prompt = params.get("prompt");
+    const autosave = params.get("autosave");
+    
+    if (prompt) {
+        composer.value = prompt;
+        if (autosave === "1") {
+            window.autoSaveNextCritique = true;
+        }
+        sendMessage();
+        
+        // Clean up URL without reloading page
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+});
