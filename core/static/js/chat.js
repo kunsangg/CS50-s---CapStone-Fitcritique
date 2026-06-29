@@ -9,6 +9,7 @@ const emptyState = document.getElementById("empty-state");
 
 let currentSessionId = null;
 let selectedImage = null;
+let remoteImageUrl = null;
 
 // Send button active state
 composer.addEventListener("input", () => {
@@ -58,13 +59,13 @@ document.querySelectorAll(".suggestion-chip").forEach(chip => {
 
 async function sendMessage() {
     const text = composer.value.trim();
-    if (!text && !selectedImage) return;
+    if (!text && !selectedImage && !remoteImageUrl) return;
 
     // Hide empty state
     if (emptyState) emptyState.classList.add("hidden");
 
     // Render user message
-    appendUserMessage(text, selectedImage);
+    appendUserMessage(text, selectedImage, remoteImageUrl);
 
     // Reset composer
     composer.value = "";
@@ -83,9 +84,13 @@ async function sendMessage() {
     if (selectedImage) {
         formData.append("image", selectedImage);
     }
+    if (remoteImageUrl) {
+        formData.append("image_url", remoteImageUrl);
+    }
 
     // Reset image
     selectedImage = null;
+    remoteImageUrl = null;
     imageInput.value = "";
     imagePreview.classList.add("hidden");
 
@@ -121,7 +126,7 @@ async function sendMessage() {
     }
 }
 
-function appendUserMessage(text, image) {
+function appendUserMessage(text, image, remoteUrl = null) {
     const div = document.createElement("div");
     div.className = "flex justify-end mb-6";
     
@@ -129,6 +134,9 @@ function appendUserMessage(text, image) {
     if (image) {
         const url = URL.createObjectURL(image);
         imageHtml = `<img src="${url}" 
+                         class="w-48 h-48 object-cover rounded-xl mb-2" />`;
+    } else if (remoteUrl) {
+        imageHtml = `<img src="${remoteUrl}" 
                          class="w-48 h-48 object-cover rounded-xl mb-2" />`;
     }
 
@@ -306,12 +314,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const params = new URLSearchParams(window.location.search);
     const prompt = params.get("prompt");
     const autosave = params.get("autosave");
+    const imageUrl = params.get("image_url");
     
-    if (prompt) {
-        composer.value = prompt;
+    if (prompt || imageUrl) {
+        if (prompt) composer.value = prompt;
         if (autosave === "1") {
             window.autoSaveNextCritique = true;
         }
+        
+        if (imageUrl) {
+            remoteImageUrl = imageUrl;
+            imagePreviewImg.src = imageUrl;
+            imagePreview.classList.remove("hidden");
+            
+            // Allow removing the image before it auto-sends if they somehow cancel it
+            removeImageBtn.addEventListener("click", () => {
+                remoteImageUrl = null;
+                imagePreview.classList.add("hidden");
+            });
+        }
+        
         sendMessage();
         
         // Clean up URL without reloading page

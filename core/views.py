@@ -107,6 +107,17 @@ def chat_api(request):
     text = request.POST.get("message", "").strip()
     session_id = request.POST.get("session_id")
     image_file = request.FILES.get("image")
+    image_url = request.POST.get("image_url")
+    
+    if image_url and not image_file:
+        try:
+            img_res = req.get(image_url, timeout=5)
+            if img_res.status_code == 200:
+                from django.core.files.base import ContentFile
+                image_file = ContentFile(img_res.content, name="unsplash_look.jpg")
+                image_file.content_type = img_res.headers.get("Content-Type", "image/jpeg")
+        except Exception as e:
+            pass
     
     if not text and not image_file:
         return JsonResponse({"error": "No input provided"}, status=400)

@@ -43,6 +43,12 @@
 <script>
 let currentCategory = "";
 
+// Helper to prevent quotes from breaking HTML injection
+function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+}
+
 async function loadTrends(category = currentCategory) {
     currentCategory = category;
     const grid = document.getElementById("trends-grid");
@@ -83,7 +89,7 @@ async function loadTrends(category = currentCategory) {
                                 opacity-0 group-hover:opacity-100 transition-all 
                                 duration-300 flex flex-col justify-end p-4">
                         <div class="translate-y-4 group-hover:translate-y-0 transition-transform duration-300 w-full">
-                            <button class="w-full bg-cyan-500/90 backdrop-blur-sm
+                            <button onclick="critiqueThis('${escapeHtml(photo.alt)}', '${photo.url}')" class="w-full bg-cyan-500/90 backdrop-blur-sm
                                           hover:bg-cyan-400 text-white font-medium
                                           text-sm rounded-xl py-2.5 
                                           transition-colors shadow-lg">
@@ -109,8 +115,8 @@ async function loadTrends(category = currentCategory) {
     }
 }
 
-function critiqueThis(styleDescription) {
-    window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}&autosave=1`;
+function critiqueThis(styleDescription, imageUrl) {
+    window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}&image_url=${encodeURIComponent(imageUrl)}&autosave=1`;
 }
 
 document.querySelectorAll('.filter-pill').forEach(btn => {
