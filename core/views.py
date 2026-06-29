@@ -63,18 +63,43 @@ def history_view(request):
 
 @login_required
 def saved_view(request):
-    saved_looks = request.user.saved_looks.select_related('message').order_by('-created_at')
+    from .models import SavedLook, Message
+    looks = SavedLook.objects.filter(
+        user=request.user
+    ).select_related("message", "message__session").order_by("-created_at")
     
-    # Pre-parse json content for the template
-    import json
-    for look in saved_looks:
-        if look.message.role == 'assistant':
-            try:
-                look.message.parsed_content = json.loads(look.message.content)
-            except:
-                look.message.parsed_content = {}
+    saved_data = []
+    for look in looks:
+        try:
+            import json
+            # If the saved look is for an assistant message, parse the JSON
+            if look.message.role == 'assistant':
+                critique = json.loads(look.message.content)
                 
-    return render(request, 'saved.html', {'saved_looks': saved_looks})
+                # The image belongs to the preceding user message
+                user_msg = Message.objects.filter(
+                    session=look.message.session, 
+                    role='user',
+                    created_at__lte=look.message.created_at
+                ).order_by('-created_at').first()
+            else:
+                # Fallback if a user message was saved somehow
+                critique = {}
+                user_msg = look.message
+                
+            img_url = user_msg.image.url if user_msg and user_msg.image else None
+            
+            saved_data.append({
+                "id": look.id,
+                "session_title": look.message.session.title or "Untitled Session",
+                "created_at": look.created_at.strftime("%b %d, %Y, %I:%M %p"),
+                "critique": critique,
+                "image_url": img_url,
+            })
+        except Exception:
+            continue
+            
+    return render(request, "saved.html", {"saved_looks": saved_data})
 
 @login_required
 def profile_view(request):
