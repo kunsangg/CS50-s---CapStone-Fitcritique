@@ -71,8 +71,8 @@ def get_fashion_critique(conversation_history, image_base64=None,
     # Add image if provided
     if image_base64 and image_mime_type:
         final_parts.append({
-            "inline_data": {
-                "mime_type": image_mime_type,
+            "inlineData": {
+                "mimeType": image_mime_type,
                 "data": image_base64
             }
         })
