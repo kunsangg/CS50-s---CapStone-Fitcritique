@@ -173,7 +173,12 @@ def chat_api(request):
             image_mime_type
         )
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        error_msg = str(e)
+        if "rate limit" in error_msg.lower() or "429" in error_msg:
+            return JsonResponse({
+                "error": "Too many requests. Please wait a moment and try again."
+            }, status=429)
+        return JsonResponse({"error": error_msg}, status=500)
     
     # Save assistant message
     assistant_content = json.dumps(critique)

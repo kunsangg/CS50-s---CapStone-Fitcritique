@@ -1,9 +1,10 @@
 import os
 import json
 import requests
+import time
 from django.conf import settings
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent"
 
 SYSTEM_PROMPT = """
 You are FitCritic, a sharp, direct, knowledgeable fashion critic 
@@ -91,8 +92,19 @@ def get_fashion_critique(conversation_history, image_base64=None,
         }
     }
     
-    response = requests.post(url, json=payload)
-    response.raise_for_status()
+    max_retries = 3
+    for attempt in range(max_retries):
+        response = requests.post(url, json=payload)
+        
+        if response.status_code == 429:
+            wait = 2 ** attempt  # 1s, 2s, 4s
+            time.sleep(wait)
+            continue
+            
+        response.raise_for_status()
+        break
+    else:
+        raise Exception("Gemini rate limit exceeded. Please wait a moment and try again.")
     
     data = response.json()
     raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
