@@ -99,15 +99,20 @@ def get_fashion_critique(conversation_history, image_base64=None,
         print("STATUS:", response.status_code)
         print("RESPONSE:", response.text)
         
-        if response.status_code == 429:
+        if response.status_code in [429, 500, 502, 503, 504]:
             wait = 2 ** attempt  # 1s, 2s, 4s
             time.sleep(wait)
             continue
             
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
+        except Exception as e:
+            error_msg = str(e).replace(api_key, "HIDDEN_KEY")
+            raise Exception(f"Gemini API Error: {error_msg}")
+            
         break
     else:
-        raise Exception("Gemini rate limit exceeded. Please wait a moment and try again.")
+        raise Exception("Gemini API is temporarily unavailable. Please try again.")
     
     data = response.json()
     raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
