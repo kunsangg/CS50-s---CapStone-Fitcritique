@@ -4,7 +4,7 @@ import requests
 import time
 from django.conf import settings
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 
 SYSTEM_PROMPT = """
 You are FitCritic, a sharp, direct, knowledgeable fashion critic 
