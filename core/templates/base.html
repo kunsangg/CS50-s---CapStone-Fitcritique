@@ -1,0 +1,94 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}FitCritic{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom CSS -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="bg-[#0a0a0a] text-zinc-100 font-sans antialiased min-h-screen flex flex-col md:flex-row">
+    
+    {% if user.is_authenticated %}
+    <!-- Sidebar -->
+    <nav class="w-full md:w-64 bg-zinc-950 border-r border-zinc-800 flex flex-col md:h-screen sticky top-0 z-10 hidden md:flex">
+        <div class="p-6">
+            <h1 class="text-xl font-bold tracking-tight text-white mb-8">FitCritic.</h1>
+            
+            <a href="{% url 'chat' %}" class="flex items-center space-x-3 text-zinc-400 hover:text-white mb-4 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                <span class="font-medium">New Chat</span>
+            </a>
+            <a href="{% url 'history' %}" class="flex items-center space-x-3 text-zinc-400 hover:text-white mb-4 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="font-medium">History</span>
+            </a>
+            <a href="{% url 'saved' %}" class="flex items-center space-x-3 text-zinc-400 hover:text-white mb-4 transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path></svg>
+                <span class="font-medium">Saved Looks</span>
+            </a>
+        </div>
+        
+        <div class="mt-auto p-6 border-t border-zinc-800">
+            <a href="{% url 'profile' %}" class="flex items-center space-x-3 text-zinc-400 hover:text-white mb-4 transition">
+                <div class="w-8 h-8 bg-zinc-800 rounded-full overflow-hidden flex items-center justify-center">
+                    {% if user.profile.avatar %}
+                        <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="w-full h-full object-cover">
+                    {% else %}
+                        <span class="text-xs">{{ user.username|first|upper }}</span>
+                    {% endif %}
+                </div>
+                <span class="font-medium text-sm truncate">{{ user.username }}</span>
+            </a>
+            <a href="{% url 'logout' %}" class="text-sm text-zinc-500 hover:text-red-400 transition">Log out</a>
+        </div>
+    </nav>
+    
+    <!-- Mobile header -->
+    <header class="md:hidden flex items-center justify-between p-4 border-b border-zinc-800 bg-zinc-950 sticky top-0 z-10">
+        <h1 class="text-lg font-bold tracking-tight text-white">FitCritic.</h1>
+        <button id="mobile-menu-btn" class="text-zinc-400">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+        </button>
+    </header>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col relative h-screen">
+        {% block content %}
+        {% endblock %}
+    </main>
+    
+    <script src="{% static 'js/ui.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

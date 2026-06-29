@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Chat History - FitCritic{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex h-full bg-[#0a0a0a]">
+    <div class="w-full max-w-4xl mx-auto p-4 md:p-8">
+        <h2 class="text-3xl font-bold tracking-tight text-white mb-8">Chat History</h2>
+        
+        <div id="sessions-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Loading -->
+            <div class="animate-pulse bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <div class="h-4 bg-zinc-800 rounded w-1/2 mb-2"></div>
+                <div class="h-3 bg-zinc-800 rounded w-1/4"></div>
+            </div>
+            <div class="animate-pulse bg-zinc-900 border border-zinc-800 rounded-xl p-6">
+                <div class="h-4 bg-zinc-800 rounded w-1/2 mb-2"></div>
+                <div class="h-3 bg-zinc-800 rounded w-1/4"></div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const list = document.getElementById('sessions-list');
+    try {
+        const res = await fetch('/api/sessions/');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.sessions.length === 0) {
+                list.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-zinc-500 mb-4">No chat history yet.</p>
+                    <a href="{% url 'chat' %}" class="inline-flex bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700 transition">Start a new chat</a>
+                </div>`;
+                return;
+            }
+            
+            list.innerHTML = data.sessions.map(s => `
+                <a href="/chat/${s.id}/" class="block bg-zinc-900 border border-zinc-800 hover:border-indigo-500/50 rounded-xl p-6 transition group">
+                    <h3 class="text-lg font-semibold text-white mb-2 group-hover:text-indigo-400 transition truncate">${escapeHtml(s.title)}</h3>
+                    <p class="text-sm text-zinc-500">${new Date(s.updated_at).toLocaleDateString()} at ${new Date(s.updated_at).toLocaleTimeString()}</p>
+                </a>
+            `).join('');
+        }
+    } catch(e) {
+        console.error(e);
+        list.innerHTML = `<p class="text-red-400">Failed to load history.</p>`;
+    }
+    
+    function escapeHtml(unsafe) {
+        if (!unsafe) return '';
+        return (unsafe + '')
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+});
+</script>
+{% endblock %}

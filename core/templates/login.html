@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Log In - FitCritic{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-zinc-950 border border-zinc-800 rounded-xl p-8 shadow-2xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-white mb-2">FitCritic.</h1>
+            <p class="text-zinc-400">Sign in to get AI fashion critiques.</p>
+        </div>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+            
+            {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-zinc-300">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <p class="text-red-400 text-xs mt-1">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="w-full bg-white text-black font-semibold rounded-lg px-4 py-2 hover:bg-zinc-200 transition">
+                Sign In
+            </button>
+        </form>
+        
+        <p class="text-center text-zinc-500 text-sm mt-6">
+            Don't have an account? <a href="{% url 'register' %}" class="text-white hover:underline">Register here</a>.
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}Saved Looks - FitCritic{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex flex-col h-full bg-[#0a0a0a] overflow-y-auto">
+    <div class="w-full max-w-4xl mx-auto p-4 md:p-8">
+        <h2 class="text-3xl font-bold tracking-tight text-white mb-8">Saved Looks</h2>
+        
+        {% if not saved_looks %}
+        <div class="text-center py-12">
+            <p class="text-zinc-500 mb-4">You haven't saved any looks yet.</p>
+            <a href="{% url 'chat' %}" class="text-indigo-400 hover:underline">Go get some critiques</a>
+        </div>
+        {% else %}
+        
+        <div class="space-y-8">
+            {% for look in saved_looks %}
+            <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+                
+                <div class="flex justify-between items-start mb-4">
+                    <p class="text-xs text-zinc-500">Saved on {{ look.created_at|date:"M j, Y" }}</p>
+                    <a href="/chat/{{ look.message.session.id }}/" class="text-xs text-indigo-400 hover:underline">View original chat</a>
+                </div>
+                
+                <div class="flex flex-col md:flex-row gap-6">
+                    <!-- If user uploaded an image just before this AI message, it's not directly attached to this message, 
+                         but for simplicity we might not show it here if we don't fetch the previous message. -->
+                         
+                    <div class="flex-1">
+                        {% with data=look.message.parsed_content %}
+                        {% if data %}
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-zinc-800">
+                                <h3 class="text-lg font-medium text-white">{{ data.summary|truncatechars:60 }}</h3>
+                                <div class="ml-4 shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-full border-2 {% if data.fit_score >= 7 %}border-green-500/50 text-green-400{% elif data.fit_score >= 5 %}border-yellow-500/50 text-yellow-400{% else %}border-red-500/50 text-red-400{% endif %}">
+                                    <span class="text-lg font-bold">{{ data.fit_score }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-sm">
+                                <div>
+                                    <span class="text-green-400 block mb-1">Works:</span>
+                                    <ul class="text-zinc-400 space-y-1">
+                                    {% for w in data.what_works|slice:":2" %}
+                                        <li class="truncate">• {{ w }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <span class="text-red-400 block mb-1">Needs Work:</span>
+                                    <ul class="text-zinc-400 space-y-1">
+                                    {% for w in data.what_doesnt|slice:":2" %}
+                                        <li class="truncate">• {{ w }}</li>
+                                    {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p class="text-zinc-400">{{ look.message.content|truncatechars:150 }}</p>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

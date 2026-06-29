@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Chat - FitCritic{% endblock %}
+
+{% block content %}
+<div class="flex-1 flex flex-col h-full bg-[#0a0a0a] relative overflow-hidden">
+    
+    <!-- Header (Mobile mostly handled by base.html, but this is a chat specific header if needed) -->
+    
+    <!-- Chat Messages Area -->
+    <div id="chat-container" class="flex-1 overflow-y-auto p-4 md:p-8 pb-32">
+        
+        <!-- Empty State (Hidden once messages exist) -->
+        <div id="empty-state" class="h-full flex flex-col items-center justify-center text-center opacity-100 transition-opacity">
+            <div class="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center mb-6">
+                <svg class="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-semibold text-white mb-2">What are you wearing today?</h2>
+            <p class="text-zinc-400 max-w-md">Describe your outfit or upload a photo to get an AI-powered styling critique.</p>
+        </div>
+        
+        <!-- Messages will be appended here via JS -->
+        <div id="messages-list" class="max-w-3xl mx-auto space-y-6"></div>
+        
+    </div>
+
+    <!-- Composer Pinned to Bottom -->
+    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a] to-transparent pt-10 pb-4 px-4 md:px-8">
+        <div class="max-w-3xl mx-auto">
+            
+            <!-- Image Preview Area (Hidden by default) -->
+            <div id="image-preview-container" class="hidden mb-2 relative inline-block">
+                <img id="image-preview" src="" alt="Upload preview" class="h-20 w-20 object-cover rounded-lg border border-zinc-700">
+                <button type="button" id="remove-image-btn" class="absolute -top-2 -right-2 bg-zinc-800 text-white rounded-full p-1 border border-zinc-600 hover:bg-zinc-700">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <form id="chat-form" class="relative bg-zinc-900 border border-zinc-800 rounded-2xl shadow-xl flex items-end p-2 transition-all focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/50">
+                
+                <input type="file" id="image-upload" accept="image/*" class="hidden">
+                <button type="button" id="trigger-upload" class="p-3 text-zinc-400 hover:text-white rounded-xl hover:bg-zinc-800 transition shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
+                
+                <textarea id="chat-input" rows="1" class="w-full max-h-48 bg-transparent text-zinc-100 placeholder-zinc-500 resize-none py-3 px-2 focus:outline-none" placeholder="Describe your outfit..."></textarea>
+                
+                <button type="submit" id="send-btn" class="p-3 m-1 text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 transition shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                </button>
+            </form>
+            <div class="text-center mt-2">
+                <span class="text-xs text-zinc-600">AI can make mistakes. Consider the critique as editorial advice.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add csrf token for JS fetch requests -->
+{% csrf_token %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/upload.js' %}"></script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}
