@@ -320,14 +320,14 @@ def fetch_trends_api(request):
     category = request.GET.get('category')
     
     if category:
-        query = f"{category} fashion style"
+        query = f"{category} outfit apparel clothing model"
     else:
         queries = [
-            "street fashion outfit 2025",
-            "minimalist fashion aesthetic",
-            "luxury fashion editorial",
-            "summer outfit inspiration",
-            "mens fashion style"
+            "streetwear fashion outfit apparel model",
+            "minimalist clothing outfit model",
+            "luxury fashion editorial outfit",
+            "y2k clothing apparel outfit",
+            "korean fashion streetwear outfit model"
         ]
         import random
         query = random.choice(queries)
