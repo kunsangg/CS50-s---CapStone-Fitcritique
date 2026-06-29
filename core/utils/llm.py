@@ -32,6 +32,7 @@ Be direct. Do not be encouraging for the sake of it.
 If something does not work, say so clearly. 
 Use fashion terminology accurately. 
 Never break from JSON format.
+Never use apostrophes or single quotes anywhere in your JSON response. Use only double quotes for strings. Escape any special characters properly.
 """
 
 def get_fashion_critique(conversation_history, image_base64=None, 
@@ -117,23 +118,37 @@ def get_fashion_critique(conversation_history, image_base64=None,
     data = response.json()
     raw_text = data["candidates"][0]["content"]["parts"][0]["text"]
     
-    # Clean up in case model wraps in backticks
     clean = raw_text.strip()
-    if clean.startswith("```"):
-        # Remove first line which is typically ```json
-        clean = clean.split("\n", 1)[-1]
-    if clean.endswith("```"):
-        # Remove last line which is typically ```
-        clean = clean.rsplit("\n", 1)[0]
     
-    clean = clean.strip()
+    # Remove markdown fences
+    if "```" in clean:
+        clean = clean.replace("```json", "").replace("```", "").strip()
+    
+    # Extract just the JSON object
+    start = clean.find("{")
+    end = clean.rfind("}") + 1
+    if start == -1 or end == 0:
+        raise ValueError("No JSON found")
+    clean = clean[start:end]
+    
+    # Fix common Gemini JSON issues:
+    # Replace smart quotes with regular double quotes
+    clean = clean.replace("\u201c", '"').replace("\u201d", '"')
+    clean = clean.replace("\u2018", "'").replace("\u2019", "'")
     
     try:
         return json.loads(clean)
-    except json.JSONDecodeError as e:
-        print("JSON Decode Error!")
-        print("RAW TEXT:")
-        print(raw_text)
-        print("CLEANED TEXT:")
-        print(clean)
-        raise e
+    except json.JSONDecodeError:
+        # Last resort: use ast.literal_eval
+        try:
+            import ast
+            return ast.literal_eval(clean)
+        except Exception:
+            return {
+                "fit_score": 0,
+                "summary": "Unable to parse response. Please try again with more outfit details.",
+                "what_works": [],
+                "what_doesnt": [],
+                "suggestions": ["Describe specific pieces, colors, and the occasion."],
+                "products": []
+            }
