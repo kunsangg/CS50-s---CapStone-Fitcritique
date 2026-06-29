@@ -242,8 +242,12 @@ function appendCritiqueCard(critique) {
 
 function appendError(msg) {
     const div = document.createElement("div");
-    div.className = "mb-6 text-red-400 text-sm";
-    div.textContent = msg;
+    div.className = "flex justify-start mb-6";
+    div.innerHTML = `
+        <div class="max-w-lg bg-[#2f2f2f] border border-red-500/30 rounded-2xl px-4 py-3 text-red-400 text-sm">
+            ${escapeHtml(msg)}
+        </div>
+    `;
     messagesContainer.appendChild(div);
     scrollToBottom();
 }
