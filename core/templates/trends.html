@@ -79,7 +79,7 @@ async function loadTrends(category = currentCategory) {
             div.innerHTML = `
                 <div class="relative group rounded-2xl overflow-hidden 
                             bg-[#18181b] border border-white/5 cursor-pointer shadow-lg"
-                     onclick="critiqueThis('${photo.alt.replace(/'/g, "\\'")}')">
+                     onclick="critiqueThis('${escapeHtml(photo.alt)}', '${photo.url}')">
                     <img src="${photo.thumb}" 
                          alt="${photo.alt}"
                          class="w-full object-cover transition-transform 

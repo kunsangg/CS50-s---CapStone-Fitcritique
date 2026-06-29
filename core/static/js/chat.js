@@ -322,7 +322,7 @@ document.addEventListener("DOMContentLoaded", () => {
             window.autoSaveNextCritique = true;
         }
         
-        if (imageUrl) {
+        if (imageUrl && imageUrl !== "undefined") {
             remoteImageUrl = imageUrl;
             imagePreviewImg.src = imageUrl;
             imagePreview.classList.remove("hidden");
