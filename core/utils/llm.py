@@ -4,7 +4,7 @@ import requests
 import time
 from django.conf import settings
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
 SYSTEM_PROMPT = """
 You are FitCritic, a sharp, direct, knowledgeable fashion critic 
@@ -113,6 +113,8 @@ def get_fashion_critique(conversation_history, image_base64=None,
             
         break
     else:
+        if 'response' in locals() and response and response.status_code == 429:
+            raise Exception("Gemini API Error: 429 Rate limit exceeded. Please wait a minute and try again.")
         raise Exception("Gemini API is temporarily unavailable. Please try again.")
     
     data = response.json()
