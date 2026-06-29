@@ -57,7 +57,7 @@ async function loadTrends(category = currentCategory) {
     `;
     
     try {
-        const url = category ? \`/api/trends/?category=\${encodeURIComponent(category)}\` : "/api/trends/";
+        const url = category ? `/api/trends/?category=${encodeURIComponent(category)}` : "/api/trends/";
         const res = await fetch(url);
         const data = await res.json();
         
