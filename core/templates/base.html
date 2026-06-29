@@ -154,6 +154,13 @@
 
     <!-- Global JS -->
     {% if user.is_authenticated %}
+    <style>
+        @media (min-width: 768px) {
+            .sidebar-closed-desktop {
+                margin-left: -260px !important;
+            }
+        }
+    </style>
     <script>
         // Inline UI logic for sidebar toggle and fetching history
         document.addEventListener('DOMContentLoaded', () => {
@@ -180,17 +187,8 @@
                         }, 300);
                     }
                 } else {
-                    // Desktop width toggle
-                    const isClosed = sidebar.classList.contains('md:w-0');
-                    if (isClosed) {
-                        sidebar.classList.remove('md:w-0');
-                        sidebar.classList.remove('md:-translate-x-full');
-                        sidebar.classList.remove('border-r-0');
-                    } else {
-                        sidebar.classList.add('md:w-0');
-                        sidebar.classList.add('md:-translate-x-full');
-                        sidebar.classList.add('border-r-0');
-                    }
+                    // Desktop width toggle via margin for smooth slide without squishing content
+                    sidebar.classList.toggle('sidebar-closed-desktop');
                 }
             }
             
