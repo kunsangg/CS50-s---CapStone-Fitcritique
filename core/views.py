@@ -317,16 +317,20 @@ def style_trends_view(request):
 
 @login_required
 def fetch_trends_api(request):
-    queries = [
-        "street fashion outfit 2025",
-        "minimalist fashion aesthetic",
-        "luxury fashion editorial",
-        "summer outfit inspiration",
-        "mens fashion style"
-    ]
+    category = request.GET.get('category')
     
-    import random
-    query = random.choice(queries)
+    if category:
+        query = f"{category} fashion style"
+    else:
+        queries = [
+            "street fashion outfit 2025",
+            "minimalist fashion aesthetic",
+            "luxury fashion editorial",
+            "summer outfit inspiration",
+            "mens fashion style"
+        ]
+        import random
+        query = random.choice(queries)
     
     from django.conf import settings
     access_key = getattr(settings, "UNSPLASH_ACCESS_KEY", None)

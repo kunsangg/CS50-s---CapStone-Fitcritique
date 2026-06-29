@@ -15,6 +15,17 @@
             Refresh Feed
         </button>
     </div>
+
+    <!-- Filters -->
+    <div class="flex flex-wrap gap-2 mb-8">
+        <button class="filter-pill active bg-cyan-400 text-black px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="">All</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="streetwear">Streetwear</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="minimalist">Minimalist</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="luxury">Luxury</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="summer">Summer</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="mens">Menswear</button>
+        <button class="filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors" data-category="vintage">Vintage</button>
+    </div>
     
     <div id="trends-grid" 
          class="columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4 pb-20">
@@ -29,7 +40,10 @@
 </div>
 
 <script>
-async function loadTrends() {
+let currentCategory = "";
+
+async function loadTrends(category = currentCategory) {
+    currentCategory = category;
     const grid = document.getElementById("trends-grid");
     grid.innerHTML = `
         <div class="text-[#a1a1aa] text-sm flex items-center gap-2 col-span-full">
@@ -42,7 +56,8 @@ async function loadTrends() {
     `;
     
     try {
-        const res = await fetch("/api/trends/");
+        const url = category ? \`/api/trends/?category=\${encodeURIComponent(category)}\` : "/api/trends/";
+        const res = await fetch(url);
         const data = await res.json();
         
         if (data.error) {
@@ -97,7 +112,17 @@ function critiqueThis(styleDescription) {
     window.location.href = `/chat/?prompt=${encodeURIComponent('Critique this style: ' + styleDescription)}`;
 }
 
-document.getElementById("refresh-btn").addEventListener("click", loadTrends);
+document.querySelectorAll('.filter-pill').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-pill').forEach(b => {
+            b.className = "filter-pill bg-[#18181b] text-[#a1a1aa] hover:text-white border border-white/5 hover:border-white/10 px-4 py-1.5 rounded-full text-sm font-medium transition-colors";
+        });
+        e.target.className = "filter-pill active bg-cyan-400 text-black px-4 py-1.5 rounded-full text-sm font-medium transition-colors";
+        loadTrends(e.target.dataset.category);
+    });
+});
+
+document.getElementById("refresh-btn").addEventListener("click", () => loadTrends(currentCategory));
 loadTrends();
 </script>
 {% endblock %}
