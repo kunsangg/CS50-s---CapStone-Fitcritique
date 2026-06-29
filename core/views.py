@@ -3,11 +3,13 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import json
+import base64
 from .forms import UserRegistrationForm
 from .models import UserProfile, ChatSession, Message
 from .utils.helpers import decode_base64_image, generate_session_title
-from .utils.claude import get_claude_response
+from .utils.llm import get_fashion_critique
 
 def index(request):
     if request.user.is_authenticated:
@@ -96,63 +98,95 @@ def profile_view(request):
     return render(request, 'profile.html', {'stats': stats})
 
 @login_required
-def api_chat(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            message_text = data.get('message', '')
-            image_base64 = data.get('image', None)
-            session_id = data.get('session_id', None)
-            
-            if not message_text and not image_base64:
-                return JsonResponse({'error': 'Message or image required'}, status=400)
-            
-            # Fetch or create session
-            if session_id:
-                try:
-                    session = ChatSession.objects.get(id=session_id, user=request.user)
-                except ChatSession.DoesNotExist:
-                    return JsonResponse({'error': 'Session not found'}, status=404)
-            else:
-                title = generate_session_title(message_text)
-                session = ChatSession.objects.create(user=request.user, title=title)
-            
-            # Save user message
-            user_msg = Message(session=session, role='user', content=message_text)
-            if image_base64:
-                image_file = decode_base64_image(image_base64)
-                if image_file:
-                    user_msg.image = image_file
-            user_msg.save()
-            
-            # Get history
-            history = list(Message.objects.filter(session=session).order_by('created_at').values('role', 'content'))
-            # Filter out the message we just added so we don't send it twice, wait get_claude_response expects everything
-            # Actually get_claude_response appends the current message. Let's only pass history prior to this message.
-            history = history[:-1] 
-            
-            # Call Claude
-            claude_response = get_claude_response(message_text, image_base64, history)
-            
-            # Save AI message
-            if 'error' not in claude_response:
-                ai_msg = Message.objects.create(
-                    session=session,
-                    role='assistant',
-                    content=json.dumps(claude_response)
-                )
-                return JsonResponse({
-                    'session_id': session.id,
-                    'message_id': ai_msg.id,
-                    'response': claude_response
-                })
-            else:
-                return JsonResponse({'error': claude_response['error']}, status=500)
-                
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+@csrf_exempt
+def chat_api(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
     
-    return JsonResponse({'error': 'Invalid method'}, status=405)
+    # Parse request
+    text = request.POST.get("message", "").strip()
+    session_id = request.POST.get("session_id")
+    image_file = request.FILES.get("image")
+    
+    if not text and not image_file:
+        return JsonResponse({"error": "No input provided"}, status=400)
+    
+    # Get or create session
+    if session_id:
+        try:
+            session = ChatSession.objects.get(
+                id=session_id, user=request.user
+            )
+        except ChatSession.DoesNotExist:
+            return JsonResponse({"error": "Session not found"}, 
+                                status=404)
+    else:
+        # Auto-title from first message
+        title = text[:50] if text else "Outfit Upload"
+        session = ChatSession.objects.create(
+            user=request.user, 
+            title=title
+        )
+    
+    # Save user message
+    user_message = Message.objects.create(
+        session=session,
+        role="user",
+        content=text
+    )
+    if image_file:
+        user_message.image = image_file
+        user_message.save()
+    
+    # Build conversation history from DB
+    past_messages = Message.objects.filter(
+        session=session
+    ).exclude(id=user_message.id).order_by("created_at")
+    
+    conversation_history = []
+    for msg in past_messages:
+        role = "user" if msg.role == "user" else "model"
+        conversation_history.append({
+            "role": role,
+            "parts": [{"text": msg.content or ""}]
+        })
+    
+    # Add current message
+    conversation_history.append({
+        "role": "user",
+        "parts": [{"text": text or "Please critique my outfit in the image."}]
+    })
+    
+    # Handle image
+    image_base64 = None
+    image_mime_type = None
+    if image_file:
+        image_file.seek(0)
+        image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+        image_mime_type = image_file.content_type
+    
+    # Call Gemini
+    try:
+        critique = get_fashion_critique(
+            conversation_history, 
+            image_base64, 
+            image_mime_type
+        )
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+    
+    # Save assistant message
+    assistant_content = json.dumps(critique)
+    Message.objects.create(
+        session=session,
+        role="assistant",
+        content=assistant_content
+    )
+    
+    return JsonResponse({
+        "session_id": session.id,
+        "critique": critique
+    })
 
 @login_required
 def api_sessions(request):

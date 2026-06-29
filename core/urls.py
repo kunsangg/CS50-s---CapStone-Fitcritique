@@ -13,7 +13,7 @@ urlpatterns = [
     path('saved/', views.saved_view, name='saved'),
     path('profile/', views.profile_view, name='profile'),
     
-    path('api/chat/', views.api_chat, name='api_chat'),
+    path('api/chat/', views.chat_api, name='chat_api'),
     path('api/sessions/', views.api_sessions, name='api_sessions'),
     path('api/sessions/<int:session_id>/', views.api_session_detail, name='api_session_detail'),
     path('api/sessions/<int:session_id>/save/', views.api_save_look, name='api_save_look'),

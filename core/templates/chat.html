@@ -7,7 +7,7 @@
     
     <!-- Messages Scroll Area -->
     <div id="messages-container" class="flex-1 overflow-y-auto w-full custom-scrollbar pb-32">
-        <div class="w-full max-w-[680px] mx-auto px-4 pt-10 pb-6 flex flex-col gap-6" id="messages-list">
+        <div class="w-full max-w-[680px] mx-auto px-4 pt-10 pb-6 flex flex-col gap-6" id="messages">
             
             <!-- Empty State -->
             <div id="empty-state" class="flex flex-col items-center justify-center mt-12 md:mt-24 h-full">
@@ -49,8 +49,8 @@
         <div class="max-w-[680px] mx-auto relative">
             
             <!-- Image Preview Area -->
-            <div id="preview-container" class="hidden absolute bottom-full left-0 mb-3 bg-chatgpt-bubble border border-chatgpt-border rounded-xl p-2 w-32 h-32 group shadow-xl">
-                <img id="image-preview" src="#" alt="Preview" class="w-full h-full object-cover rounded-lg">
+            <div id="image-preview" class="hidden absolute bottom-full left-0 mb-3 bg-chatgpt-bubble border border-chatgpt-border rounded-xl p-2 w-32 h-32 group shadow-xl">
+                <img id="preview-img" src="#" alt="Preview" class="w-full h-full object-cover rounded-lg">
                 <button type="button" id="remove-image" class="absolute -top-2 -right-2 bg-chatgpt-border text-white rounded-full p-1 shadow-lg hover:bg-chatgpt-muted transition opacity-0 group-hover:opacity-100">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -59,17 +59,16 @@
             <form id="chat-form" class="relative bg-chatgpt-bubble rounded-2xl shadow-[0_0_15px_rgba(0,0,0,0.1)] border border-chatgpt-border focus-within:border-white/20 transition-colors flex items-end px-3 py-3">
                 {% csrf_token %}
                 <input type="file" id="image-input" accept="image/*" class="hidden">
-                <input type="hidden" id="base64-image" name="image">
                 
-                <button type="button" id="attach-btn" class="p-2 text-chatgpt-text hover:text-white hover:bg-[#383838] rounded-xl transition-colors mb-0.5 shrink-0">
+                <button type="button" id="attach-btn" onclick="document.getElementById('image-input').click()" class="p-2 text-chatgpt-text hover:text-white hover:bg-[#383838] rounded-xl transition-colors mb-0.5 shrink-0">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
                     </svg>
                 </button>
                 
-                <textarea id="message-input" name="message" rows="1" class="w-full bg-transparent text-white placeholder-chatgpt-muted outline-none resize-none px-3 py-[9px] max-h-[200px] overflow-y-auto custom-scrollbar text-base md:text-sm" placeholder="Message FitCritic..."></textarea>
+                <textarea id="composer-input" name="message" rows="1" class="w-full bg-transparent text-white placeholder-chatgpt-muted outline-none resize-none px-3 py-[9px] max-h-[200px] overflow-y-auto custom-scrollbar text-base md:text-sm" placeholder="Message FitCritic..."></textarea>
                 
-                <button type="submit" id="send-btn" class="p-2 bg-chatgpt-border text-chatgpt-muted rounded-xl transition-colors shrink-0 mb-0.5" disabled>
+                <button type="button" id="send-btn" class="p-2 bg-[#3f3f3f] text-white rounded-xl transition-colors shrink-0 mb-0.5">
                     <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.993.993 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.06-.87.49-.87.99l.01 4.61c0 .71.73 1.2 1.39.92z"></path></svg>
                 </button>
             </form>
