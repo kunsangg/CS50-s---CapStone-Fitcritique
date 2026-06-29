@@ -55,35 +55,54 @@
         <div id="mobile-overlay" class="fixed inset-0 bg-black/50 z-40 hidden md:hidden opacity-0 sidebar-overlay cursor-pointer"></div>
 
         <!-- Sidebar -->
-        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[260px] bg-chatgpt-sidebar flex flex-col transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+        <div id="sidebar" class="fixed inset-y-0 left-0 z-50 w-[260px] bg-[#09090b] flex flex-col transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0 border-r border-white/5">
             
             <!-- Top Section -->
-            <div class="p-3 pb-0">
-                <a href="{% url 'chat' %}" class="flex items-center gap-2 mb-4 px-3 pt-2 text-white font-medium text-lg">
-                    <span>FitCritic</span>
+            <div class="p-4 pb-0">
+                <a href="{% url 'chat' %}" class="flex items-center gap-2 mb-6 text-white font-bold text-xl tracking-tight">
+                    <span class="text-cyan-400">🌊</span> FitCritic
                 </a>
                 
-                <a href="{% url 'chat' %}" class="flex items-center justify-between w-full rounded-xl bg-chatgpt-bubble hover:bg-[#383838] px-3 py-2 text-sm text-white transition-colors duration-200">
+                <a href="{% url 'chat' %}" class="flex items-center justify-center w-full rounded-lg bg-[#27272a] hover:bg-[#3f3f46] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 mb-6">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        <span>New chat</span>
+                        <span>New Critique</span>
                     </div>
-                    <svg class="w-4 h-4 text-chatgpt-muted hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                 </a>
+
+                <!-- Placeholder Navigation Links to match NAGI -->
+                <div class="space-y-1 mb-6">
+                    <a href="#" class="flex items-center gap-3 w-full rounded-lg bg-[#27272a] px-3 py-2 text-sm text-white font-medium transition-colors">
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        Discover
+                    </a>
+                    <a href="#" class="flex items-center gap-3 w-full rounded-lg hover:bg-[#27272a]/50 px-3 py-2 text-sm text-[#a1a1aa] hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>
+                        Style Maps
+                    </a>
+                    <a href="#" class="flex items-center gap-3 w-full rounded-lg hover:bg-[#27272a]/50 px-3 py-2 text-sm text-[#a1a1aa] hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        Collections
+                    </a>
+                </div>
             </div>
 
             <!-- Middle Section: Chat History -->
-            <div class="flex-1 overflow-y-auto mt-4 px-3 custom-scrollbar" id="sidebar-history-container">
-                <div class="text-xs font-semibold text-chatgpt-muted mb-2 px-3 uppercase tracking-wider">Today</div>
+            <div class="flex-1 overflow-y-auto px-4 custom-scrollbar" id="sidebar-history-container">
+                <div class="text-[11px] font-bold text-[#71717a] mb-3 uppercase tracking-wider">Recent</div>
                 <div id="sidebar-history-list" class="space-y-1">
                     <!-- Fetched dynamically -->
                 </div>
             </div>
 
-            <!-- Bottom Section: User Profile -->
-            <div class="p-3 border-t border-white/10 mt-auto">
-                <a href="{% url 'profile' %}" class="flex items-center gap-2 w-full hover:bg-chatgpt-bubble rounded-xl p-2 transition-colors text-white text-sm font-medium">
-                    <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center shrink-0 overflow-hidden text-white">
+            <!-- Bottom Section: Settings & Profile -->
+            <div class="p-4 mt-auto space-y-1">
+                <a href="#" class="flex items-center gap-3 w-full rounded-lg hover:bg-[#27272a]/50 px-2 py-2 text-sm text-[#a1a1aa] hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Settings
+                </a>
+                <a href="{% url 'profile' %}" class="flex items-center gap-3 w-full rounded-lg hover:bg-[#27272a]/50 px-2 py-2 transition-colors text-[#a1a1aa] hover:text-white text-sm">
+                    <div class="w-5 h-5 rounded-full bg-[#3f3f46] flex items-center justify-center shrink-0 overflow-hidden text-[10px] text-white">
                         {% if user.profile.avatar %}
                             <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="w-full h-full object-cover">
                         {% else %}
@@ -93,12 +112,8 @@
                     <div class="truncate flex-1">{{ user.username }}</div>
                 </a>
                 
-                <form method="post" action="{% url 'logout' %}" class="w-full mt-1">
+                <form method="post" action="{% url 'logout' %}" class="w-full hidden" id="logout-form">
                     {% csrf_token %}
-                    <button type="submit" class="flex items-center gap-2 w-full hover:bg-chatgpt-bubble rounded-xl p-2 transition-colors text-chatgpt-muted hover:text-white text-sm">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        <span>Log out</span>
-                    </button>
                 </form>
             </div>
             
@@ -175,11 +190,14 @@
                         if (data.sessions && data.sessions.length > 0) {
                             historyList.innerHTML = data.sessions.map(s => {
                                 const isActive = window.location.pathname.includes(`/chat/${s.id}/`);
-                                const activeClass = isActive ? 'bg-chatgpt-bubble text-white' : 'hover:bg-chatgpt-bubble text-chatgpt-text hover:text-white';
-                                return `<a href="/chat/${s.id}/" class="block w-full text-left truncate rounded-lg p-2 text-sm transition-colors ${activeClass}">${s.title}</a>`;
+                                const activeClass = isActive ? 'bg-[#27272a] text-white' : 'hover:bg-[#27272a]/50 text-[#a1a1aa] hover:text-white';
+                                return `<a href="/chat/${s.id}/" class="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors ${activeClass}">
+                                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                                    <span class="truncate">${s.title}</span>
+                                </a>`;
                             }).join('');
                         } else {
-                            historyList.innerHTML = `<p class="text-xs text-chatgpt-muted p-2">No previous chats.</p>`;
+                            historyList.innerHTML = `<p class="text-xs text-[#71717a] p-2">No previous chats.</p>`;
                         }
                     })
                     .catch(err => console.error(err));
