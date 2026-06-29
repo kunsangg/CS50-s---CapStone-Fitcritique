@@ -89,7 +89,7 @@ def get_fashion_critique(conversation_history, image_base64=None,
         "contents": contents,
         "generationConfig": {
             "temperature": 0.7,
-            "maxOutputTokens": 1024,
+            "maxOutputTokens": 8192,
             "responseMimeType": "application/json"
         }
     }
